@@ -1,10 +1,10 @@
 const path = require("path");
 const { helper, checkuser } = require("../helper/helper");
 const { userModel } = require("../Models/user.model");
-const bcryptjs = require("bcryptjs");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
-
-
+const SECRET_KEY= '12345';
 const Register = async (req, res) => {
     try {
       const { email, password, FullName } = req.body;
@@ -49,7 +49,7 @@ const login = async (req, res) => {
         email: existingUser.email,
         role: existingUser.role
       };
-      const token = jwt.sign(payload, process.env.SECRET_KEY, { expiresIn: "72h" });
+      const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "72h" });
   
       res.send({ token ,user: payload });
     } catch (error) {

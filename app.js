@@ -1,4 +1,3 @@
-require('dotenv').config(); // Load environment variables
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -9,8 +8,8 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const passport = require('passport');
 
-require('./middelware/passport')(passport); // Import passport middleware
-const userRouter = require('./routes/auth.route'); // Import routes
+// Setup passport
+require('./middelware/passport')(passport);
 
 const app = express();
 
@@ -21,6 +20,11 @@ app.use(cors({
   credentials: true,
 }));
 
+// Get port from environment and set it to the app
+const port = process.env.PORT || 4000;  // Default to 4000 if no PORT is set in the environment
+app.set('port', port);
+
+// Create the HTTP server using the app
 const server = http.createServer(app);
 const io = socketIo(server);
 
@@ -34,13 +38,19 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(passport.initialize());
 
-// Define routes
-app.use('/api', userRouter);
+// Routes (imported correctly)
+const Authrouter = require('./routes/auth.route');
+app.use('/api', Authrouter);
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI || "mongodb+srv://eya:<db_password>@cluster0.96xwi.mongodb.net/")
+mongoose.connect(process.env.MONGO_URI || "mongodb+srv://eya:eya@cluster0.96xwi.mongodb.net/")
   .then(() => console.log('DB connected'))
   .catch(err => console.error('DB connection error:', err));
 
-// Export app and server
-module.exports = { app };
+// Start the server
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
+// Export the app directly
+module.exports = app;  // This should export the app directly
