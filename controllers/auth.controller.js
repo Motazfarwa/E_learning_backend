@@ -16,7 +16,7 @@ const Register = async (req, res) => {
       }
   
       // Hash the password
-      const hash = await bcryptjs.hash(password, 10);
+      const hash = await bcrypt.hash(password, 10);
       req.body.password = hash;
   
       // Create the new user
@@ -49,9 +49,9 @@ const login = async (req, res) => {
         email: existingUser.email,
         role: existingUser.role
       };
-      const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "72h" });
+      const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "24h" });
   
-      res.send({ token ,user: payload });
+      res.send({ token ,user: payload, role: existingUser.role });
     } catch (error) {
       // Log error for debugging
       console.error(error);
