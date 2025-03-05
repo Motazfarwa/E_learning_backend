@@ -8,6 +8,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const passport = require('passport');
 
+
 // Setup passport
 require('./middelware/passport')(passport);
 
@@ -41,7 +42,13 @@ app.use(passport.initialize());
 // Routes (imported correctly)
 const Authrouter = require('./routes/auth.route');
 app.use('/api', Authrouter);
-
+const courseRoutes = require('./routes/courseRoutes');
+// Use course routes
+app.use('/api', courseRoutes);
+const Paymentroute= require('./routes/paymentroute');
+app.use('/api', Paymentroute);
+// Serve static files from "uploads" folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI || "mongodb+srv://eya:eya@cluster0.96xwi.mongodb.net/")
   .then(() => console.log('DB connected'))
