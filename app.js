@@ -41,6 +41,9 @@ app.use(passport.initialize());
 // Routes (imported correctly)
 const Authrouter = require('./routes/auth.route');
 app.use('/api', Authrouter);
+const courseRoutes = require('./routes/course.route');
+app.use('/api/courses', courseRoutes);
+app.use("/uploads", express.static("uploads"));
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI || "mongodb+srv://eya:eya@cluster0.96xwi.mongodb.net/")
