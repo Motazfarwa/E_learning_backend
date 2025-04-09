@@ -52,6 +52,9 @@ app.use("/uploads", express.static("uploads"));
 const courseRoutes = require('./routes/course.route'); 
 app.use('/api/courses', courseRoutes);
 
+const googleMeetRoute = require('./routes/googleMeet.route');
+app.use('/api', googleMeetRoute);
+
 const Paymentroute= require('./routes/paymentroute');
 app.use('/api', Paymentroute);
 // Serve static files from "uploads" folder

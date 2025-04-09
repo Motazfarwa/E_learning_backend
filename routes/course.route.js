@@ -10,4 +10,4 @@ router.put('/:id', courseController.updateCourse);
 router.delete('/:id', courseController.deleteCourse);
 router.post("/upload", upload.single("file"), courseController.uploadFile);
 
-module.exports = courseRoutes ;
+module.exports = router;
