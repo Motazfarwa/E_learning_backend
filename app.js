@@ -45,6 +45,7 @@ app.use('/api', Authrouter);
 
 
 app.use("/uploads", express.static("uploads"));
+app.use('/api/users', require('./routes/users'));
 
 
 
