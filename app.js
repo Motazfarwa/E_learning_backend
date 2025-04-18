@@ -7,6 +7,7 @@ const logger = require('morgan');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const passport = require('passport');
+const commentsRouter = require('./routes/comments');
 
 
 // Setup passport
@@ -52,6 +53,7 @@ app.use('/api/users', require('./routes/users'));
 // Use course routes
 const courseRoutes = require('./routes/course.route'); 
 app.use('/api/courses', courseRoutes);
+app.use('/api/comments', commentsRouter);
 
 const googleMeetRoute = require('./routes/googleMeet.route');
 app.use('/api', googleMeetRoute);

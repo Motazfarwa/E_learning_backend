@@ -2,6 +2,38 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const User = require('../Models/user.model').userModel;
+const multer = require('multer')
+
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'Uploads/');
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+    if (extname && mimetype) {
+      return cb(null, true);
+    }
+    cb(new Error('Seules les images JPEG/PNG sont autorisées'));
+  },
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limite à 5MB
+});
+
+router.post('/', upload.single('profileImage'), async (req, res) => {
+  const profileImage = req.file ? req.file.filename : '';
+  // ...
+});
 
 // GET : Lister tous les utilisateurs
 router.get('/', async (req, res) => {
@@ -20,13 +52,22 @@ router.get('/', async (req, res) => {
 });
 
 // POST : Créer un nouvel utilisateur
-router.post('/', async (req, res) => {
+router.post('/', upload.single('profileImage') , async (req, res) => {
+  const { FullName, email, password, role } = req.body;
+  const profileImage = req.file ? req.file.filename : '';
   try {
-    const { FullName, email, password, role, profileImage } = req.body;
+    console.log('Requête POST /api/users reçue :', req.body, req.file);
 
     // Validation
     if (!email || !password) {
       return res.status(400).json({ error: 'Email et mot de passe sont requis' });
+    }
+
+    // Vérifier si la combinaison email/role existe déjà
+    const existingUser = await User.findOne({ email, role });
+    if (existingUser) {
+      console.log('Erreur : Cet email est déjà utilisé pour ce rôle', { email, role });
+      return res.status(400).json({ error: 'Cet email est déjà utilisé pour ce rôle' });
     }
 
     // Hachage du mot de passe
@@ -47,8 +88,9 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Erreur lors de la création de l’utilisateur :', error);
     if (error.code === 11000) {
-      res.status(400).json({ error: 'Cet email est déjà utilisé' });
-    } else {
+      console.log('Erreur d’index unique :', { email: req.body.email, role: req.body.role });
+      return res.status(400).json({ error: 'Cet email est déjà utilisé pour ce rôle' });
+    }else {
       res.status(400).json({
         error: 'Erreur lors de la création de l’utilisateur',
         details: error.message,
@@ -58,9 +100,12 @@ router.post('/', async (req, res) => {
 });
 
 // PUT : Mettre à jour un utilisateur
-router.put('/:id', async (req, res) => {
+router.put('/:id', upload.single('profileImage') , async (req, res) => {
+
+  const { FullName, email, role } = req.body;
+  const profileImage = req.file ? req.file.filename : req.body.profileImage;
   try {
-    const { FullName, email, role, profileImage } = req.body;
+    console.log('Requête PUT /api/users/:id reçue :', req.body, req.file, 'ID:', req.params.id);
 
     // Validation
     if (!email) {
