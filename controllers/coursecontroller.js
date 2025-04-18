@@ -18,15 +18,21 @@ const upload = multer({ storage });
 const createCourse = async (req, res) => {
   try {
     const { nom, description } = req.body;
+
+    // Ensure all required fields are provided
     if (!nom || !description || !req.files['file'] || !req.files['courseimagefile']) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
+    // If there are multiple files, we store all their filenames
+    const files = req.files['file'].map((file) => file.filename);
+
+    // Create the course and store multiple file paths
     const course = new Course({
       nom,
       description,
-      file: req.files['file'][0].filename,
-      courseimagefile: req.files['courseimagefile'][0].filename
+      file: files, // Store all file paths
+      courseimagefile: req.files['courseimagefile'][0].filename, // Only one image
     });
 
     await course.save();
@@ -36,6 +42,7 @@ const createCourse = async (req, res) => {
     res.status(500).json({ message: 'Error adding course' });
   }
 };
+
 
 // Get all courses
 const getAllCourses = async (req, res) => {
@@ -105,6 +112,9 @@ const downloadFile = (req, res) => {
     }
   });
 };
+
+
+
 
 module.exports = {
   upload,
