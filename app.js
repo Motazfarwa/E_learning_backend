@@ -7,12 +7,12 @@ const logger = require('morgan');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const passport = require('passport');
-<<<<<<< HEAD
-const commentsRouter = require('./routes/comments');
 
-=======
+
+
+
 const socketIO = require('socket.io');
->>>>>>> aa2835f1b80f8a3072fa6e130dc60254834b1473
+
 
 // Setup passport
 require('./middelware/passport')(passport);
@@ -52,13 +52,13 @@ app.use(passport.initialize());
 // Routes (imported correctly)
 const Authrouter = require('./routes/auth.route');
 app.use('/api', Authrouter);
-<<<<<<< HEAD
+
 const courseRoutes = require('./routes/courseRoutes');
 const meetingsRouter = require('./routes/meeting');
 // Use course routes
 app.use('/api', courseRoutes);
 app.use('/api/meetings', meetingsRouter);
-=======
+
 
 
 app.use("/uploads", express.static("uploads"));
@@ -67,14 +67,13 @@ app.use('/api/users', require('./routes/users'));
 
 
 // Use course routes
-const courseRoutes = require('./routes/course.route'); 
-app.use('/api/courses', courseRoutes);
-app.use('/api/comments', commentsRouter);
+
+
 
 const googleMeetRoute = require('./routes/googleMeet.route');
 app.use('/api', googleMeetRoute);
 
->>>>>>> e8340c5f6c15d0e051afed678d2e48ae6775c4f5
+
 const Paymentroute= require('./routes/paymentroute');
 app.use('/api', Paymentroute);
 // Serve static files from "uploads" folder
