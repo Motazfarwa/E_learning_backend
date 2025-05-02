@@ -20,7 +20,8 @@ const userSchema = new Schema({
         default: 'APPRENANT',
        },
       
-   profileImage: { type: String }
+   profileImage: { type: String } , 
+   
 
 
     

@@ -1,0 +1,277 @@
+{
+  "settings": {
+    "languages": [
+      "fr"
+    ],
+    "forceNER": true,
+    "tag": "nlp",
+    "threshold": 0.5,
+    "autoLoad": true,
+    "autoSave": true,
+    "modelFileName": "model.nlp",
+    "executeActionsBeforeAnswers": false,
+    "calculateSentiment": true
+  },
+  "nluManager": {
+    "settings": {
+      "tag": "nlu-manager"
+    },
+    "locales": [
+      "fr"
+    ],
+    "languageNames": {},
+    "domainManagers": {
+      "fr": {
+        "settings": {
+          "locale": "fr",
+          "trainByDomain": false,
+          "tag": "domain-manager-fr",
+          "nluByDomain": {
+            "default": {
+              "className": "NeuralNlu",
+              "settings": {}
+            }
+          },
+          "useStemDict": true
+        },
+        "stemDict": {
+          "e,stupid,tu": {
+            "intent": "toxic",
+            "domain": "default"
+          },
+          "detest,je,te": {
+            "intent": "toxic",
+            "domain": "default"
+          },
+          "beaucoup,merc": {
+            "intent": "clean",
+            "domain": "default"
+          },
+          "excellent,travail": {
+            "intent": "clean",
+            "domain": "default"
+          }
+        },
+        "intentDict": {
+          "toxic": "default",
+          "clean": "default"
+        },
+        "sentences": [
+          {
+            "domain": "default",
+            "utterance": "Tu es stupide",
+            "intent": "toxic"
+          },
+          {
+            "domain": "default",
+            "utterance": "Je te déteste",
+            "intent": "toxic"
+          },
+          {
+            "domain": "default",
+            "utterance": "Merci beaucoup",
+            "intent": "clean"
+          },
+          {
+            "domain": "default",
+            "utterance": "Excellent travail",
+            "intent": "clean"
+          }
+        ],
+        "domains": {
+          "master_domain": {
+            "settings": {
+              "locale": "fr",
+              "tag": "nlu-fr",
+              "keepStopwords": true,
+              "nonefeatureValue": 1,
+              "nonedeltaMultiplier": 1.2,
+              "spellCheck": false,
+              "spellCheckDistance": 1,
+              "filterZeros": true,
+              "log": true
+            },
+            "features": {
+              "tu": 1,
+              "e": 1,
+              "stupid": 1,
+              "je": 1,
+              "te": 1,
+              "detest": 1,
+              "merc": 1,
+              "beaucoup": 1,
+              "excellent": 1,
+              "travail": 1
+            },
+            "intents": {
+              "toxic": 1,
+              "clean": 1
+            },
+            "intentFeatures": {
+              "toxic": {
+                "tu": 1,
+                "e": 1,
+                "stupid": 1,
+                "je": 1,
+                "te": 1,
+                "detest": 1
+              },
+              "clean": {
+                "merc": 1,
+                "beaucoup": 1,
+                "excellent": 1,
+                "travail": 1
+              }
+            },
+            "featuresToIntent": {
+              "tu": [
+                "toxic"
+              ],
+              "e": [
+                "toxic"
+              ],
+              "stupid": [
+                "toxic"
+              ],
+              "je": [
+                "toxic"
+              ],
+              "te": [
+                "toxic"
+              ],
+              "detest": [
+                "toxic"
+              ],
+              "merc": [
+                "clean"
+              ],
+              "beaucoup": [
+                "clean"
+              ],
+              "excellent": [
+                "clean"
+              ],
+              "travail": [
+                "clean"
+              ]
+            },
+            "neuralNetwork": {
+              "settings": {
+                "locale": "fr",
+                "tag": "nlu-fr",
+                "keepStopwords": true,
+                "nonefeatureValue": 1,
+                "nonedeltaMultiplier": 1.2,
+                "spellCheck": false,
+                "spellCheckDistance": 1,
+                "filterZeros": true,
+                "log": true
+              },
+              "features": [
+                "tu",
+                "e",
+                "stupid",
+                "je",
+                "te",
+                "detest",
+                "merc",
+                "beaucoup",
+                "excellent",
+                "travail"
+              ],
+              "intents": [
+                "toxic",
+                "clean"
+              ],
+              "perceptrons": [
+                [
+                  3.9035348892211914,
+                  3.9035348892211914,
+                  3.9035348892211914,
+                  3.8940963745117188,
+                  3.8940963745117188,
+                  3.8940963745117188,
+                  -1.2962309122085571,
+                  -1.2962309122085571,
+                  -1.2853583097457886,
+                  -1.2853583097457886,
+                  2.5997831308524013
+                ],
+                [
+                  -1.2858344316482544,
+                  -1.2858344316482544,
+                  -1.2858344316482544,
+                  -1.280160665512085,
+                  -1.280160665512085,
+                  -1.280160665512085,
+                  5.149515628814697,
+                  5.149515628814697,
+                  5.170485973358154,
+                  5.170485973358154,
+                  3.8853468887821667
+                ]
+              ]
+            }
+          }
+        }
+      }
+    },
+    "intentDomains": {},
+    "extraSentences": [
+      [
+        "fr",
+        "Tu es stupide"
+      ],
+      [
+        "fr",
+        "Je te déteste"
+      ],
+      [
+        "fr",
+        "Merci beaucoup"
+      ],
+      [
+        "fr",
+        "Excellent travail"
+      ]
+    ]
+  },
+  "ner": {
+    "settings": {
+      "tag": "ner",
+      "entityPreffix": "%",
+      "entitySuffix": "%"
+    },
+    "rules": {
+      "fr": {
+        "insulte": {
+          "name": "insulte",
+          "type": "enum",
+          "rules": [
+            {
+              "option": "idiot",
+              "texts": [
+                "idiot",
+                "imbécile",
+                "crétin"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "nlgManager": {
+    "settings": {
+      "tag": "nlg-manager"
+    },
+    "responses": {}
+  },
+  "actionManager": {
+    "settings": {
+      "tag": "action-manager"
+    },
+    "actions": {}
+  },
+  "slotManager": {}
+}

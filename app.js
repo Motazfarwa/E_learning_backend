@@ -7,6 +7,10 @@ const logger = require('morgan');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const passport = require('passport');
+const bodyParser = require('body-parser');
+
+const { trainModel } = require('./Models/ToxicityModel');
+
 
 
 
@@ -33,6 +37,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
+app.use(bodyParser.json());
 
 // Get port from environment and set it to the app
 const port = process.env.PORT || 4000;  // Default to 4000 if no PORT is set in the environment
@@ -63,10 +68,11 @@ app.use('/api/meetings', meetingsRouter);
 
 app.use("/uploads", express.static("uploads"));
 app.use('/api/users', require('./routes/users'));
-
+app.use('/api/toxicity',require('./Models/toxicity'))
 
 
 // Use course routes
+
 
 
 
@@ -110,9 +116,15 @@ io.on('connection', socket => {
 });
 
 // Start the server
-server.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+async function startServer() {
+  await trainModel(); // Ensure model is ready before handling requests
+
+  server.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}
+
+startServer(); // Call the async function
 
 
 
