@@ -8,6 +8,9 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const passport = require('passport');
 const socketIO = require('socket.io');
+const userrouter = require('./routes/users');
+
+const { trainModel } = require('./Models/ToxicityModel');
 
 // Setup passport
 require('./middelware/passport')(passport);
@@ -47,28 +50,28 @@ app.use(passport.initialize());
 // Routes (imported correctly)
 const Authrouter = require('./routes/auth.route');
 app.use('/api', Authrouter);
-<<<<<<< HEAD
+
 const courseRoutes = require('./routes/courseRoutes');
 const meetingsRouter = require('./routes/meeting');
 // Use course routes
 app.use('/api', courseRoutes);
 app.use('/api/meetings', meetingsRouter);
-=======
+
+app.use('/ajouter/users', userrouter);
+
+
 
 
 app.use("/uploads", express.static("uploads"));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/toxicity', require('./Models/Toxicity'));
 
 
-
-// Use course routes
-const courseRoutes = require('./routes/course.route'); 
-app.use('/api/courses', courseRoutes);
 
 const googleMeetRoute = require('./routes/googleMeet.route');
 app.use('/api', googleMeetRoute);
 
->>>>>>> e8340c5f6c15d0e051afed678d2e48ae6775c4f5
+
 const Paymentroute= require('./routes/paymentroute');
 app.use('/api', Paymentroute);
 // Serve static files from "uploads" folder
@@ -105,9 +108,16 @@ io.on('connection', socket => {
 });
 
 // Start the server
-server.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+// Start the server
+async function startServer() {
+  await trainModel(); // Ensure model is ready before handling requests
+
+  server.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}
+
+startServer(); // Call the async function
 
 
 

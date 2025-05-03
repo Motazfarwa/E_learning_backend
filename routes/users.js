@@ -5,18 +5,13 @@ const User = require('../Models/user.model').userModel;
 
 // GET : Lister tous les utilisateurs
 router.get('/', async (req, res) => {
-  try {
-    console.log('Requête GET /api/users reçue');
-    const users = await User.find().select('-password');
-    console.log('Utilisateurs récupérés :', users.length);
-    res.status(200).json(users);
-  } catch (error) {
-    console.error('Erreur lors de la récupération des utilisateurs :', error);
-    res.status(500).json({
-      error: 'Erreur serveur lors de la récupération des utilisateurs',
-      details: error.message,
-    });
-  }
+    try {
+      const courses = await User.find();
+      res.json(courses);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Error fetching courses' });
+    }
 });
 
 // POST : Créer un nouvel utilisateur

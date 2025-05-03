@@ -3,32 +3,37 @@ const router = express.Router();
 const Meeting = require('../Models/Meeting');
 const { generateGoogleMeetLink } = require('../utils/meethelper');
 const mongoose = require('mongoose');
-// Create meeting
+const { sendMeetingEmail } = require('../emailService');
+const nodemailer = require('nodemailer');
 
-// Modify POST route
+// Create a transporter for sending emails using Nodemailer
+const transporter = nodemailer.createTransport({
+  service: 'gmail',  // You can use any email service you prefer
+  auth: {
+    user: 'your-email@gmail.com',  // replace with your email
+    pass: 'your-email-password',   // replace with your email password (or app-specific password)
+  },
+});
+
+// Create meeting
 router.post('/', async (req, res) => {
-  // Check if all required fields are in the request body
   const { expert, learner, startTime, duration, endTime, meetingUrl, meetingId } = req.body;
 
-  if (!expert || !learner || !startTime || !endTime || !meetingUrl) {
-    return res.status(400).json({ message: 'All fields are required (expert, learner, startTime, endTime, meetingUrl).' });
-  }
-
   try {
-    // Create a new meeting
     const newMeeting = new Meeting({
       expert,
       learner,
       startTime,
-      duration: duration || 30,  // Default to 30 minutes if not provided
+      duration: duration || 30,
       endTime,
-      meetingUrl: meetingUrl || generateGoogleMeetLink(),  // Use fallback if not provided
-      meetingId: meetingId || new mongoose.Types.ObjectId().toString(), // Fallback unique ID
+      meetingUrl: meetingUrl || generateGoogleMeetLink(),
+      meetingId: meetingId || new mongoose.Types.ObjectId().toString(),
     });
 
-    // Save the new meeting to the database
     await newMeeting.save();
-    res.status(201).json(newMeeting); // Return the created meeting as response
+
+    // ✅ Send a proper JSON response
+    res.status(201).json(newMeeting);
 
   } catch (error) {
     console.error('Error saving meeting:', error);
@@ -36,6 +41,26 @@ router.post('/', async (req, res) => {
   }
 });
 
+
+// In your status update endpoint
+router.put('/:id/status', async (req, res) => {
+  try {
+    const meeting = await Meeting.findById(req.params.id);
+    meeting.status = req.body.status;
+    await meeting.save();
+
+    if (req.body.status === 'accepted') {
+      const emailSent = await sendMeetingEmail(meeting);
+      if (!emailSent) {
+        return res.status(500).json({ message: 'Meeting accepted but failed to send emails' });
+      }
+    }
+
+    res.json(meeting);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 // Get meeting details
 router.get('/:id', async (req, res) => {
   try {
@@ -48,6 +73,20 @@ router.get('/:id', async (req, res) => {
     res.json(meeting);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Get all meetings
+router.get('/', async (req, res) => {
+  try {
+    const meetings = await Meeting.find()
+      .populate('expert')
+      .populate('learner');
+      
+    res.json(meetings);
+  } catch (error) {
+    console.error('Error fetching meetings:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
