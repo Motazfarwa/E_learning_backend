@@ -7,8 +7,8 @@ const userSchema = new Schema({
     },
     email: {
         type:String,
-        required:true,
-        unique:true
+        required:true
+        
        },
    password: {
         type:String,
@@ -20,9 +20,12 @@ const userSchema = new Schema({
         default: 'APPRENANT',
        },
       
-   profileImage: { type: String }
+   profileImage: { type: String } , 
+   
 
 
     
 })
+
+userSchema.index({ email: 1, role: 1 }, { unique: true });
 module.exports.userModel= mongoose.model("users",userSchema)

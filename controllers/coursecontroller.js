@@ -112,6 +112,55 @@ const downloadFile = (req, res) => {
     }
   });
 };
+// Get course statistics
+const getCourseStats = async (req, res) => {
+  try {
+    const totalCourses = await Course.countDocuments();
+
+    // Répartition par type de fichier (basé sur l'extension des fichiers dans file[])
+    const fileTypes = await Course.aggregate([
+      { $unwind: '$file' },
+      {
+        $group: {
+          _id: {
+            $cond: [
+              { $regexMatch: { input: '$file', regex: '\.mp4$|\.avi$|\.mkv$' } },
+              'video',
+              {
+                $cond: [
+                  { $regexMatch: { input: '$file', regex: '\.pdf$' } },
+                  'pdf',
+                  'autre'
+                ]
+              }
+            ]
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Nombre de commentaires par cours
+    const commentsByCourse = await Course.aggregate([
+      {
+        $project: {
+          nom: 1,
+          commentCount: { $size: '$comments' }
+        }
+      },
+      { $sort: { commentCount: -1 } }
+    ]);
+
+    res.json({
+      totalCourses,
+      fileTypeDistribution: fileTypes,
+      commentsByCourse
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 
 
@@ -123,5 +172,6 @@ module.exports = {
   getCourseById,
   updateCourse,
   deleteCourse,
+  getCourseStats,
   downloadFile
 };
