@@ -1,3 +1,4 @@
+
 const express = require('express');
 const { manager } = require('../Models/ToxicityModel');
 const router = express.Router();
@@ -25,4 +26,4 @@ router.post('/check', async (req, res) => {
     }
   });
 
-module.exports = router;
+module.exports = router; 
