@@ -22,7 +22,7 @@ const sendMeetingEmail = async (meeting) => {
         - Expert: ${meeting.expert}
         - Time: ${meeting.startTime.toLocaleString()} to ${meeting.endTime.toLocaleString()}
         - Status: ${meeting.status}
-        - Meeting URL: ${meeting.meetingUrl}
+        - Meeting URL: http://localhost:3000/meetings/${meeting._id}
       `
     };
 
