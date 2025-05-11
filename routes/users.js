@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../Models/user.model').userModel;
 const multer = require('multer');
 const path = require('path');
+const { getExperts } = require('../controllers/user.controller');
 
 // Configuration de Multer pour l'upload d'images
 const storage = multer.diskStorage({
@@ -221,5 +222,6 @@ router.delete('/:id', async (req, res) => {
     });
   }
 });
+router.get('/experts', authMiddleware, getExperts);
 
 module.exports = router;
