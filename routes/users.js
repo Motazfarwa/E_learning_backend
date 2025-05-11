@@ -206,7 +206,7 @@ router.put('/profile', authMiddleware, upload.single('profileImage'), async (req
 });
 
 // DELETE : Supprimer un utilisateur
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) {
