@@ -14,13 +14,13 @@ const sendMeetingEmail = async (meeting) => {
   try {
     const mailOptions = {
       from: process.env.GMAIL_USER,
-      to: [meeting.expert, meeting.learner],
+      to: [meeting.expert, meeting.learner], // Sends to both
       subject: `Meeting ${meeting.status} - ${meeting.meetingId}`,
       text: `
         Meeting Details:
         - Learner: ${meeting.learner}
         - Expert: ${meeting.expert}
-        - Time: ${meeting.startTime.toLocaleString()} to ${meeting.endTime.toLocaleString()}
+        - Time: ${new Date(meeting.startTime).toLocaleString()} to ${new Date(meeting.endTime).toLocaleString()}
         - Status: ${meeting.status}
         - Meeting URL: http://localhost:3000/meetings/${meeting._id}
       `
@@ -33,5 +33,6 @@ const sendMeetingEmail = async (meeting) => {
     return false;
   }
 };
+
 
 module.exports = { sendMeetingEmail };

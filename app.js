@@ -39,6 +39,11 @@ app.use(cors({
   credentials: true,
 }));
 
+app.use(cors({
+  origin: "http://localhost:3000", // or "*"
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 
 // Get port from environment and set it to the app
 const port = process.env.PORT || 4000;  // Default to 4000 if no PORT is set in the environment

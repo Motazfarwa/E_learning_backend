@@ -51,7 +51,7 @@ const login = async (req, res) => {
       };
       const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "24h" });
   
-      res.send({ token ,user: payload, role: existingUser.role });
+      res.send({ token ,user: payload, role: existingUser.role, email: existingUser.email  });
     } catch (error) {
       // Log error for debugging
       console.error(error);

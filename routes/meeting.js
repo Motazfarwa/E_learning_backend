@@ -17,12 +17,11 @@ const transporter = nodemailer.createTransport({
 
 // Create meeting
 router.post('/', async (req, res) => {
-  const { expert, learner, startTime, duration, endTime, meetingUrl, meetingId } = req.body;
+  const { expert, startTime, duration, endTime, meetingUrl, meetingId } = req.body;
 
   try {
     const newMeeting = new Meeting({
       expert,
-      learner,
       startTime,
       duration: duration || 30,
       endTime,
@@ -47,6 +46,12 @@ router.put('/:id/status', async (req, res) => {
   try {
     const meeting = await Meeting.findById(req.params.id);
     meeting.status = req.body.status;
+
+    // Optional: override learner from request body
+    if (req.body.learner) {
+      meeting.learner = req.body.learner;
+    }
+
     await meeting.save();
 
     if (req.body.status === 'accepted') {
@@ -61,6 +66,7 @@ router.put('/:id/status', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
 // Get meeting details
 router.get('/:id', async (req, res) => {
   try {
