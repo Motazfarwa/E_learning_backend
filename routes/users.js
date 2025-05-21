@@ -1,20 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../Models/user.model').userModel;
-const multer = require('multer')
+const multer = require('multer');
+const path = require('path');
+const { getExperts } = require('../controllers/user.controller');
 
-
+// Configuration de Multer pour l'upload d'images
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, 'Uploads/');
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+    cb(null, `${req.user ? req.user.id : 'new-user'}-${uniqueSuffix}${path.extname(file.originalname)}`);
   },
 });
-
 
 const upload = multer({
   storage,
@@ -30,104 +32,177 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // Limite à 5MB
 });
 
-router.post('/', upload.single('profileImage'), async (req, res) => {
-  const profileImage = req.file ? req.file.filename : '';
-  // ...
-});
+const JWT_SECRET = process.env.JWT_SECRET || '12345';
 
-// GET : Lister tous les utilisateurs
-router.get('/', async (req, res) => {
-    try {
-      const courses = await User.find();
-      res.json(courses);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Error fetching courses' });
-    }
-});
-
-// POST : Créer un nouvel utilisateur
-router.post('/', upload.single('profileImage') , async (req, res) => {
-  const { FullName, email, password, role } = req.body;
-  const profileImage = req.file ? req.file.filename : '';
+const authMiddleware = async (req, res, next) => {
   try {
-    console.log('Requête POST /api/users reçue :', req.body, req.file);
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'Authentification requise' });
+    }
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await User.findById(decoded.id).select('-password');
+    if (!user) {
+      throw new Error('Utilisateur non trouvé');
+    }
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('Erreur authMiddleware:', error.message);
+    res.status(401).json({ error: 'Authentification requise', details: error.message });
+  }
+};
 
-    // Validation
+// Générer un token d'accès
+const generateAccessToken = (user) => {
+  return jwt.sign(
+    { id: user._id, FullName: user.FullName, role: user.role },
+    JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+};
+
+// Générer un refresh token
+const generateRefreshToken = (user) => {
+  return jwt.sign(
+    { id: user._id },
+    JWT_SECRET,
+    { expiresIn: '30d' }
+  );
+};
+
+// GET : Liste des utilisateurs (pour admin, si nécessaire)
+router.get('/', async (req, res) => {
+  try {
+    const users = await User.find().select('-password');
+    res.json(users);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Erreur lors de la récupération des utilisateurs' });
+  }
+});
+
+// POST : Inscription d'un nouvel utilisateur
+router.post('/', upload.single('profileImage'), async (req, res) => {
+  const { FullName, email, password, role } = req.body;
+  const profileImage = req.file ? `/Uploads/${req.file.filename}` : '';
+  try {
     if (!email || !password) {
       return res.status(400).json({ error: 'Email et mot de passe sont requis' });
     }
-
-    // Vérifier si la combinaison email/role existe déjà
     const existingUser = await User.findOne({ email, role });
     if (existingUser) {
-      console.log('Erreur : Cet email est déjà utilisé pour ce rôle', { email, role });
       return res.status(400).json({ error: 'Cet email est déjà utilisé pour ce rôle' });
     }
-
-    // Hachage du mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const user = new User({
       FullName,
       email,
       password: hashedPassword,
-      role: role || 'apprenant',
+      role: role || 'APPRENANT',
       profileImage,
+      profile: { bio: '', skills: [], coursesEnrolled: [], coursesCreated: [] }
     });
-
     await user.save();
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
     const userResponse = user.toObject();
     delete userResponse.password;
-    res.status(201).json(userResponse);
+    res.status(201).json({ user: userResponse, accessToken, refreshToken });
   } catch (error) {
     console.error('Erreur lors de la création de l’utilisateur :', error);
     if (error.code === 11000) {
-      console.log('Erreur d’index unique :', { email: req.body.email, role: req.body.role });
       return res.status(400).json({ error: 'Cet email est déjà utilisé pour ce rôle' });
-    }else {
-      res.status(400).json({
-        error: 'Erreur lors de la création de l’utilisateur',
-        details: error.message,
-      });
     }
+    res.status(400).json({ error: 'Erreur lors de la création de l’utilisateur', details: error.message });
   }
 });
 
-// PUT : Mettre à jour un utilisateur
-router.put('/:id', upload.single('profileImage') , async (req, res) => {
-
-  const { FullName, email, role } = req.body;
-  const profileImage = req.file ? req.file.filename : req.body.profileImage;
+// POST : Connexion
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
   try {
-    console.log('Requête PUT /api/users/:id reçue :', req.body, req.file, 'ID:', req.params.id);
-
-    // Validation
-    if (!email) {
-      return res.status(400).json({ error: 'L’email est requis' });
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ error: 'Email ou mot de passe incorrect' });
     }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Email ou mot de passe incorrect' });
+    }
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    res.json({
+      accessToken,
+      refreshToken,
+      user: { id: user._id, FullName: user.FullName, email: user.email, role: user.role, profileImage: user.profileImage }
+    });
+  } catch (error) {
+    console.error('Erreur lors de la connexion :', error);
+    res.status(500).json({ error: 'Erreur lors de la connexion' });
+  }
+});
 
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { FullName, email, role, profileImage },
-      { new: true, runValidators: true }
-    ).select('-password');
+// POST : Rafraîchir le token
+router.post('/refresh-token', async (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) {
+    return res.status(401).json({ error: 'Refresh token requis' });
+  }
+  try {
+    const decoded = jwt.verify(refreshToken, JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(401).json({ error: 'Utilisateur non trouvé' });
+    }
+    const accessToken = generateAccessToken(user);
+    res.json({ accessToken });
+  } catch (error) {
+    console.error('Erreur lors du rafraîchissement du token :', error);
+    res.status(401).json({ error: 'Refresh token invalide', details: error.message });
+  }
+});
 
+// GET : Profil de l'utilisateur connecté
+router.get('/profile', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .populate('profile.coursesEnrolled')
+      .populate('profile.coursesCreated')
+      .select('-password');
+    res.json(user);
+  } catch (error) {
+    console.error('Erreur lors de la récupération du profil :', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération du profil' });
+  }
+});
+
+// PUT : Mettre à jour le profil
+router.put('/profile', authMiddleware, upload.single('profileImage'), async (req, res) => {
+  try {
+    const { FullName, bio, skills } = req.body;
+    const profileImage = req.file ? `/Uploads/${req.file.filename}` : req.body.profileImage;
+
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
-    res.status(200).json(user);
+    // Mise à jour des champs
+    if (FullName) user.FullName = FullName;
+    if (bio) user.profile.bio = bio;
+    if (skills) user.profile.skills = skills.split(',').map(skill => skill.trim());
+    if (profileImage) user.profileImage = profileImage;
+
+    await user.save();
+    const updatedUser = await User.findById(req.user.id)
+      .populate('profile.coursesEnrolled')
+      .populate('profile.coursesCreated')
+      .select('-password');
+    res.json(updatedUser);
   } catch (error) {
-    console.error('Erreur lors de la mise à jour de l’utilisateur :', error);
-    if (error.code === 11000) {
-      res.status(400).json({ error: 'Cet email est déjà utilisé' });
-    } else {
-      res.status(400).json({
-        error: 'Erreur lors de la mise à jour de l’utilisateur',
-        details: error.message,
-      });
-    }
+    console.error('Erreur lors de la mise à jour du profil :', error);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour du profil', details: error.message });
   }
 });
 
@@ -147,6 +222,7 @@ router.delete('/:id', async (req, res) => {
     });
   }
 });
+router.get('/experts', authMiddleware, getExperts);
 
 
 router.get('/contacts', async (req, res) => {

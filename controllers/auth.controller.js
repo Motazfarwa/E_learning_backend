@@ -138,5 +138,5 @@ const uploadProfileImage = async (req, res) => {
 
 
 module.exports.authcontroller= {
- Register, login
+ Register, login , findAll ,getuserbyid ,  deleteuser , getAlluser , uploadProfileImage 
 }
