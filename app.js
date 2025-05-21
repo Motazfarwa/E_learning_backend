@@ -69,8 +69,7 @@ io.on('connection', (socket) => {
   });
 });
 
-// ✅ Routes
-const messageRoutes = require('./routes/messageRoutes');
+
 const userrouter = require('./routes/users');
 const Authrouter = require('./routes/auth.route');
 const courseRoutes = require('./routes/courseRoutes');
@@ -81,10 +80,8 @@ const Paymentroute = require('./routes/paymentroute');
 app.use('/api', Authrouter);
 app.use('/api', courseRoutes);
 app.use('/api/meetings', meetingsRouter);
-app.use('/api', messageRoutes);
 app.use('/ajouter/users', userrouter);
 app.use('/api/users', require('./routes/users'));
-app.use('/api/chat', messageRoutes);
 app.use('/api', googleMeetRoute);
 app.use('/api', Paymentroute);
 app.use('/api/toxicity', require('./Models/Toxicity'));
