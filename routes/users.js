@@ -148,4 +148,14 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+
+router.get('/contacts', async (req, res) => {
+  try {
+    const users = await User.find({ _id: { $ne: req.query.userId } }).select('-password');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

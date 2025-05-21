@@ -1,140 +1,123 @@
 const express = require('express');
 const http = require('http');
-const socketIo = require('socket.io');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const passport = require('passport');
-
-
 const { trainModel } = require('./Models/ToxicityModel');
-
-
-
-
-
-const socketIO = require('socket.io');
-const userrouter = require('./routes/users');
-
-
-// Setup passport
-require('./middelware/passport')(passport);
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server, {
-  cors: {
-    origin: 'http://localhost:3000',
-    methods: ['GET', 'POST'],
-    credentials: true
-  }
-});
 
-// Use CORS middleware
+// ✅ Enable CORS at the top before any routes
 app.use(cors({
   origin: 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
 
-app.use(cors({
-  origin: "http://localhost:3000", // or "*"
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
-}));
-
-// Get port from environment and set it to the app
-const port = process.env.PORT || 4000;  // Default to 4000 if no PORT is set in the environment
-app.set('port', port);
-
-
-// Set the io instance to app.locals for global access
+// ✅ Socket.io setup
+const io = require('socket.io')(server, {
+  cors: {
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST']
+  }
+});
 app.locals.io = io;
 
+// ✅ MongoDB connection
+mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://eya:eya@cluster0.96xwi.mongodb.net/')
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
+
+// ✅ Middleware
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(passport.initialize());
+require('./middelware/passport')(passport);
 
-// Routes (imported correctly)
-const Authrouter = require('./routes/auth.route');
-app.use('/api', Authrouter);
+// ✅ Models
+const Message = require('./models/Message');
 
-const courseRoutes = require('./routes/courseRoutes');
-const meetingsRouter = require('./routes/meeting');
-// Use course routes
-app.use('/api', courseRoutes);
-app.use('/api/meetings', meetingsRouter);
+// ✅ REST endpoint to fetch messages
+app.get('/messages', async (req, res) => {
+  try {
+    const messages = await Message.find().sort({ createdAt: 1 });
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
 
-app.use('/ajouter/users', userrouter);
+// ✅ Real-time messaging with Socket.IO
+io.on('connection', (socket) => {
+  console.log('🔌 User connected');
 
-
-
-app.use("/uploads", express.static("uploads"));
-app.use('/api/users', require('./routes/users'));
-
-app.use('/api/toxicity', require('./Models/Toxicity'));
-
-
-
-// Use course routes
-
-const googleMeetRoute = require('./routes/googleMeet.route');
-app.use('/api', googleMeetRoute);
-
-
-const Paymentroute= require('./routes/paymentroute');
-app.use('/api', Paymentroute);
-// Serve static files from "uploads" folder
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI || "mongodb+srv://eya:eya@cluster0.96xwi.mongodb.net/")
-  .then(() => console.log('DB connected'))
-  .catch(err => console.error('DB connection error:', err));
-
-  
-
-const meetings = {};
-
-io.on('connection', socket => {
-  socket.on('join-meeting', ({ meetingCode, peerId }) => {
-    socket.join(meetingCode);
-    socket.to(meetingCode).emit('user-connected', peerId);
-
-    if (!meetings[meetingCode]) meetings[meetingCode] = [];
-    meetings[meetingCode].push(peerId);
-  });
-
-  socket.on('send-message', ({ meetingCode, message }) => {
-    socket.to(meetingCode).emit('receive-message', {
-      sender: 'Stranger',
-      message,
-    });
+  socket.on('sendMessage', async ({ sender, content, role }) => {
+    const message = new Message({ sender, content, role });
+    await message.save();
+    io.emit('newMessage', message); // Broadcast to all
   });
 
   socket.on('disconnect', () => {
-    console.log('A user disconnected');
+    console.log('❌ User disconnected');
   });
 });
 
-// Start the server
+// ✅ Routes
+const messageRoutes = require('./routes/messageRoutes');
+const userrouter = require('./routes/users');
+const Authrouter = require('./routes/auth.route');
+const courseRoutes = require('./routes/courseRoutes');
+const meetingsRouter = require('./routes/meeting');
+const googleMeetRoute = require('./routes/googleMeet.route');
+const Paymentroute = require('./routes/paymentroute');
+
+app.use('/api', Authrouter);
+app.use('/api', courseRoutes);
+app.use('/api/meetings', meetingsRouter);
+app.use('/api', messageRoutes);
+app.use('/ajouter/users', userrouter);
+app.use('/api/users', require('./routes/users'));
+app.use('/api/chat', messageRoutes);
+app.use('/api', googleMeetRoute);
+app.use('/api', Paymentroute);
+app.use('/api/toxicity', require('./Models/Toxicity'));
+
+// ✅ Serve uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// ✅ Chatbot proxy route
+app.post('/api/chat', async (req, res) => {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify(req.body),
+  });
+
+  const data = await response.json();
+  res.json(data);
+});
+
+// ✅ Start server after training model
+const port = process.env.PORT || 4000;
+app.set('port', port);
 
 async function startServer() {
-  await trainModel(); // Ensure model is ready before handling requests
-
+  await trainModel(); // Train the model before starting the server
   server.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    console.log(`🚀 Server running on http://localhost:${port}`);
   });
 }
 
-startServer(); // Call the async function
+startServer();
 
-
-
-// Export the app directly
-module.exports = app;  // This should export the app directly
+module.exports = app;
