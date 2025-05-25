@@ -1,8 +1,5 @@
 pipeline {
 	agent any
-	tools {
-		nodejs 'NodeJS'
-	}
 	environment {
 		SONAR_PROJECT_KEY = 'node-app-token'
 		SONAR_SCANNER_HOME = tool 'SonarQubeScanner'
