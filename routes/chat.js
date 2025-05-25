@@ -1,7 +1,7 @@
 // routes/chat.js
 const express = require('express');
 const router = express.Router();
-const Message = require('../Models/Message');
+
 const passport = require('passport');
 
 // Récupérer les messages d'une salle

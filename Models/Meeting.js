@@ -1,11 +1,10 @@
 const mongoose = require('mongoose');
 
 const meetingSchema = new mongoose.Schema({
-<<<<<<< HEAD
+
   learner: { type: String},  // Store learner's email
-=======
-  learner: { type: String },  // Store learner's email
->>>>>>> d3745ec8127e09b81e14262e3eb918764f4f9b2e
+
+
   expert: { type: String, required: true }, 
   startTime: { type: Date, required: true },
   duration: { type: Number, default: 30 }, // in minutes

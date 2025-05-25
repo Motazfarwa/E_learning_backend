@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('../Models/user.model').userModel;
+const User = require('../Models/user.model').usermodel;
 const multer = require('multer');
 const path = require('path');
 const { getExperts } = require('../controllers/user.controller');
@@ -231,6 +231,14 @@ router.get('/contacts', async (req, res) => {
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+router.get('/courses/paid', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('purchasedCourses');
+    res.json({ paidCourseIds: user.purchasedCourses.map(id => id.toString()) });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
