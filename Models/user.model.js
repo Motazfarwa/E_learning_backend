@@ -29,4 +29,4 @@ const userSchema = new Schema({
 });
 
 userSchema.index({ email: 1, role: 1 }, { unique: true });
-module.exports.userModel = mongoose.model("users", userSchema);
+module.exports = mongoose.models.users || mongoose.model('users', userSchema);
