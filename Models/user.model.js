@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
@@ -21,12 +21,19 @@ const userSchema = new Schema({
   profileImage: { type: String },
   profile: {
     bio: { type: String, default: '' },
-    skills: [{ type: String }], // Pour INSTRUCTEUR/EXPERT
-    coursesEnrolled: [{ type: Schema.Types.ObjectId, ref: 'Course' }], // Pour APPRENANT
-    coursesCreated: [{ type: Schema.Types.ObjectId, ref: 'Course' }], // Pour INSTRUCTEUR/EXPERT
+    skills: [{ type: String }],
+    coursesEnrolled: [{ type: Schema.Types.ObjectId, ref: 'Course' }], // For APPRENANT
+    coursesCreated: [{ type: Schema.Types.ObjectId, ref: 'Course' }], // For INSTRUCTEUR/EXPERT
   },
   createdAt: { type: Date, default: Date.now },
+  purchasedCourses: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Course',
+    },
+  ],
 });
 
 userSchema.index({ email: 1, role: 1 }, { unique: true });
 module.exports = mongoose.models.users || mongoose.model('users', userSchema);
+
