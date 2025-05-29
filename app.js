@@ -75,15 +75,24 @@ const courseRoutes = require('./routes/courseRoutes');
 const meetingsRouter = require('./routes/meeting');
 const googleMeetRoute = require('./routes/googleMeet.route');
 const Paymentroute = require('./routes/paymentroute');
+
+const Recommendationroute = require('./routes/recommendation.route');
+
 const recommendationRoutes = require('./routes/recommendation.routes');
+
 
 app.use('/api', Authrouter);
 app.use('/api', courseRoutes);
 app.use('/api/meetings', meetingsRouter);
 app.use('/ajouter/users', userrouter);
+app.use('/ajouter/', Recommendationroute);
 app.use('/api/users', require('./routes/users'));
 
+
 app.use('/ajouter/', recommendationRoutes);
+
+
+
 
 app.use('/api', googleMeetRoute);
 app.use('/api', Paymentroute);
@@ -121,3 +130,5 @@ async function startServer() {
 startServer();
 
 module.exports = app;
+
+

@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const meetingSchema = new mongoose.Schema({
 
   learner: { type: String},  // Store learner's email
-
-
+  learner: { type: String },  // Store learner's email
+  learner: { type: String},  // Store learner's email
   expert: { type: String, required: true }, 
   startTime: { type: Date, required: true },
   duration: { type: Number, default: 30 }, // in minutes

@@ -21,6 +21,7 @@ const userSchema = new Schema({
   purchasedCourses: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
 });
 
+
 // Index for unique combination of email + role
 userSchema.index({ email: 1, role: 1 }, { unique: true });
 
@@ -31,3 +32,4 @@ const userModel = mongoose.models.users || mongoose.model('users', userSchema);
 module.exports = {
   userModel,
 };
+
