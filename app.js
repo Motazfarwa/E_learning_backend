@@ -83,7 +83,7 @@ app.use('/api/meetings', meetingsRouter);
 app.use('/ajouter/users', userrouter);
 app.use('/api/users', require('./routes/users'));
 
-app.use('/api', recommendationRoutes);
+app.use('/ajouter/', recommendationRoutes);
 
 app.use('/api', googleMeetRoute);
 app.use('/api', Paymentroute);

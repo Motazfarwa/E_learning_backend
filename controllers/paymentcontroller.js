@@ -1,7 +1,7 @@
 const stripe = require('stripe')('sk_test_51R0PabHGa0qYa3MxsUNoGXdfG4R74i4ij32MotFNxWToObdzUQWT69IAqJ3qzwAVjiGafQEGKUDpkJ4hjZRgQ0Ue00PwT0qfqX');
 const Payment = require('../models/Payment');
-const Course = require('../models/course.model');
-const User = require('../models/user.model');
+const Course = require('../Models/course.model');
+const User = require('../Models/user.model');
 
 // Create Payment Intent
 const createPaymentIntent = async (req, res) => {
