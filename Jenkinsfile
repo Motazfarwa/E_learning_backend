@@ -15,10 +15,10 @@ pipeline {
     stages {
         stage('Checkout Github') {
             steps {
-                cleanWs() // Clean before checkout
+                cleanWs()
                 dir('/home/jenkins/agent/workspace') {
                     checkout([$class: 'GitSCM',
-                        branches: [[name: '*/mootaz']],
+                        branches: [[name: 'mootaz']],
                         doGenerateSubmoduleConfigurations: false,
                         extensions: [],
                         userRemoteConfigs: [[
