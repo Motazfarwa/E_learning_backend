@@ -2,7 +2,8 @@ pipeline {
     agent {
         docker {
             image 'node:18'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
+            args '-v /var/run/docker.sock:/var/run/docker.sock -v ${JENKINS_HOME}/workspace/${JOB_NAME}:/home/jenkins/agent/workspace'
+            reuseNode true
         }
     }
 
@@ -14,27 +15,42 @@ pipeline {
     stages {
         stage('Checkout Github') {
             steps {
-                git branch: 'mootaz', credentialsId: 'github-cred', url: 'https://github.com/Motazfarwa/E_learning_backend.git'
+                cleanWs() // Clean before checkout
+                dir('/home/jenkins/agent/workspace') {
+                    checkout([$class: 'GitSCM',
+                        branches: [[name: '*/mootaz']],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [],
+                        userRemoteConfigs: [[
+                            credentialsId: 'github-cred',
+                            url: 'https://github.com/Motazfarwa/E_learning_backend.git'
+                        ]]
+                    ])
+                }
             }
         }
 
         stage('Install node dependencies') {
             steps {
-                sh 'npm install'
+                dir('/home/jenkins/agent/workspace') {
+                    sh 'npm install'
+                }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withCredentials([string(credentialsId: 'node-app-token', variable: 'SONAR_TOKEN')]) {
-                    withSonarQubeEnv('SonarQube') {
-                        sh """
-                            ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
-                            -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                            -Dsonar.sources=. \
-                            -Dsonar.host.url=http://localhost:9000 \
-                            -Dsonar.login=${SONAR_TOKEN}
-                        """
+                dir('/home/jenkins/agent/workspace') {
+                    withCredentials([string(credentialsId: 'node-app-token', variable: 'SONAR_TOKEN')]) {
+                        withSonarQubeEnv('SonarQube') {
+                            sh """
+                                ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                                -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                                -Dsonar.sources=. \
+                                -Dsonar.host.url=http://localhost:9000 \
+                                -Dsonar.login=${SONAR_TOKEN}
+                            """
+                        }
                     }
                 }
             }
@@ -42,7 +58,9 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t mootezfarwa/noderepo .'
+                dir('/home/jenkins/agent/workspace') {
+                    sh 'docker build -t mootezfarwa/noderepo .'
+                }
             }
         }
 
