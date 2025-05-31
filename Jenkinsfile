@@ -1,11 +1,13 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:18' // ✅ Use a Node image with npm preinstalled
+        }
+    }
 
     environment {
         SONAR_PROJECT_KEY = 'node-app-token'
         SONAR_SCANNER_HOME = tool 'SonarQubeScanner'
-        IMAGE_NAME = 'mootezfarwa/noderepo'
-        DOCKER_CREDENTIALS_ID = 'dockerhub-mootezfarwa' // You must configure this in Jenkins Credentials
     }
 
     stages {
@@ -15,7 +17,7 @@ pipeline {
             }
         }
 
-        stage('Install Node Dependencies') {
+        stage('Install node dependencies') {
             steps {
                 sh 'npm install'
             }
@@ -39,18 +41,17 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    docker.build("${IMAGE_NAME}:latest")
-                }
+                sh 'docker build -t mootezfarwa/noderepo .'
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS_ID}") {
-                        docker.image("${IMAGE_NAME}:latest").push()
-                    }
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-mootezfarwa', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    sh '''
+                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                        docker push mootezfarwa/noderepo
+                    '''
                 }
             }
         }
@@ -64,7 +65,7 @@ pipeline {
 
     post {
         success {
-            echo '✅ Pipeline completed successfully!'
+            echo '✅ Build and push completed successfully!'
         }
         failure {
             echo '❌ Pipeline failed. Check logs for details.'
