@@ -11,7 +11,7 @@ pipeline {
 	stages {
 		stage('Checkout Github'){
 			steps {
-				git branch: 'main', credentialsId: 'github-cred', url: 'https://github.com/iQuantC/Simple_NodeJS_App.git'
+				git branch: 'mootaz',  url: 'https://github.com/Motazfarwa/E_learning_backend.git'
 			}
 		}
 		
