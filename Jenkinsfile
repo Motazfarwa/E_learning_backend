@@ -21,21 +21,25 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
+            stage('SonarQube Analysis') {
             steps {
                 withCredentials([string(credentialsId: 'node-app-token', variable: 'SONAR_TOKEN')]) {
-                  withSonarQubeEnv('SonarQube') {
-                  sh """
-                        sonar-scanner \
-                        -Dsonar.projectKey=node-app \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=http://sonarqube:9000 \  # Updated URL
-                        -Dsonar.token=${SONAR_TOKEN}               # Use token only
-                     """
-                }
+                    withSonarQubeEnv('SonarQube') {
+                        script {
+                            def scannerHome = tool 'SonarQubeScanner'
+                            sh """
+                                ${scannerHome}/bin/sonar-scanner \\
+                                -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \\
+                                -Dsonar.sources=. \\
+                                -Dsonar.host.url=http://192.168.1.2:9000 \\
+                                -Dsonar.token=$SONAR_TOKEN
+                            """
+                        }
+                    }
                 }
             }
         }
+
 
         stage('Build Docker Image') {
             steps {
